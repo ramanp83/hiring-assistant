@@ -27,7 +27,7 @@ candidate_questions = [
     "List your tech stack (languages, frameworks, tools)."
 ]
 
-# Initialize state
+# Init state
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
@@ -46,24 +46,14 @@ if "confirmation_pending" not in st.session_state:
 if "info_verified" not in st.session_state:
     st.session_state.info_verified = False
 
-# Chat history
+# Display history
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
 
-# Show next question if collecting
-if (
-    st.session_state.current_question_index < len(candidate_questions)
-    and not st.session_state.confirmation_pending
-):
-    current_question = candidate_questions[st.session_state.current_question_index]
-    with st.chat_message("assistant"):
-        st.markdown(current_question)
-
-# User input
+# Handle input
 user_input = st.chat_input("Your answer...")
 
-# Fallback and exit logic
 exit_keywords = ["exit", "stop", "bye", "thank you"]
 
 if user_input:
@@ -84,33 +74,38 @@ if user_input:
     with st.chat_message("user"):
         st.markdown(user_input)
 
-    # If we’re collecting info
+    # Info collection phase
     if (
         st.session_state.current_question_index < len(candidate_questions)
         and not st.session_state.confirmation_pending
     ):
-        question_key = candidate_questions[st.session_state.current_question_index]
-        st.session_state.candidate_info[question_key] = user_input
+        # Save answer
+        q_key = candidate_questions[st.session_state.current_question_index]
+        st.session_state.candidate_info[q_key] = user_input
         st.session_state.context = update_context(st.session_state.context, user_input)
         st.session_state.current_question_index += 1
 
-    # After all questions → Show summary and ask for confirmation
-    if (
-        st.session_state.current_question_index == len(candidate_questions)
-        and not st.session_state.confirmation_pending
-    ):
-        summary = "**Here’s the information you provided:**\n\n"
-        for question, answer in st.session_state.candidate_info.items():
-            summary += f"**{question}**: {answer}\n\n"
+        # Ask next question
+        if st.session_state.current_question_index < len(candidate_questions):
+            next_q = candidate_questions[st.session_state.current_question_index]
+            with st.chat_message("assistant"):
+                st.markdown(next_q)
+            st.stop()
 
-        with st.chat_message("assistant"):
-            st.markdown(summary)
-            st.markdown("✅ Is all this correct? (yes / no)")
+        # End of questions → Show summary
+        else:
+            summary = "**Here’s the information you provided:**\n\n"
+            for question, answer in st.session_state.candidate_info.items():
+                summary += f"**{question}**: {answer}\n\n"
 
-        st.session_state.confirmation_pending = True
-        st.stop()
+            with st.chat_message("assistant"):
+                st.markdown(summary)
+                st.markdown("✅ Is all this correct? (yes / no)")
 
-    # Handle user reply to confirmation
+            st.session_state.confirmation_pending = True
+            st.stop()
+
+    # Handle confirmation
     if st.session_state.confirmation_pending and not st.session_state.info_verified:
         if user_input.lower() == "yes":
             st.session_state.info_verified = True
@@ -123,18 +118,19 @@ if user_input:
                 st.markdown("⚠️ Please reply with `yes` or `no` to confirm the information.")
             st.stop()
 
-    # If verified, proceed to generate tech questions
+    # Generate technical questions
     if st.session_state.info_verified:
         tech_stack = st.session_state.candidate_info.get(candidate_questions[-1], "")
         instruction = f"Generate 3 to 5 technical interview questions for the following tech stack: {tech_stack}. Keep them relevant and appropriately challenging."
 
         reply = get_llm_response(instruction, st.session_state.context)
         st.session_state.messages.append({"role": "assistant", "content": reply})
+
         with st.chat_message("assistant"):
             st.markdown("✅ Thanks! Here are your custom technical questions:")
             st.markdown(reply)
 
-        # Save info
+        # Save candidate info
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         name = st.session_state.candidate_info.get("What is your full name?", "anonymous").replace(" ", "_")
         filename = f"candidate_{name}_{timestamp}.json"
@@ -145,5 +141,15 @@ if user_input:
 
         st.success(f"✅ Candidate info saved to: `candidates/{filename}`")
 
-        st.session_state.current_question_index += 1  # lock the flow
+        st.session_state.current_question_index += 1  # lock state
         st.stop()
+
+# Display initial question on first load
+if (
+    st.session_state.current_question_index < len(candidate_questions)
+    and not st.session_state.confirmation_pending
+    and user_input is None
+):
+    current_q = candidate_questions[st.session_state.current_question_index]
+    with st.chat_message("assistant"):
+        st.markdown(current_q)
