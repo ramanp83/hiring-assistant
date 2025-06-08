@@ -14,7 +14,7 @@ st.markdown("Hi! I'm here to help screen candidates. Let's get started! 🚀")
 if st.button("🔄 Restart Chat"):
     for key in list(st.session_state.keys()):
         del st.session_state[key]
-    st.experimental_rerun()
+    st.rerun()
 
 # Question list
 candidate_questions = [
