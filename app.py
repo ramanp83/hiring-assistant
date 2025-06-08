@@ -1,45 +1,149 @@
 import streamlit as st
+import os
+import json
+import datetime
 from utils.openai_utils import get_llm_response
 from utils.context_utils import update_context, clear_context
 
-# Page config
+# Page setup
 st.set_page_config(page_title="TalentScout Hiring Assistant", layout="wide")
-
-# Title
 st.title("🤖 TalentScout - AI Hiring Assistant")
 st.markdown("Hi! I'm here to help screen candidates. Let's get started! 🚀")
 
-# Initialize session state
+# 🔄 Restart
+if st.button("🔄 Restart Chat"):
+    for key in list(st.session_state.keys()):
+        del st.session_state[key]
+    st.experimental_rerun()
+
+# Question list
+candidate_questions = [
+    "What is your full name?",
+    "Please provide your email address.",
+    "Can I have your phone number?",
+    "How many years of experience do you have?",
+    "What position are you applying for?",
+    "Where are you currently located?",
+    "List your tech stack (languages, frameworks, tools)."
+]
+
+# Initialize state
 if "messages" not in st.session_state:
     st.session_state.messages = []
+
 if "context" not in st.session_state:
     st.session_state.context = []
 
-# Chat input
-user_input = st.chat_input("Say something...")
+if "candidate_info" not in st.session_state:
+    st.session_state.candidate_info = {}
 
-# Show chat history
+if "current_question_index" not in st.session_state:
+    st.session_state.current_question_index = 0
+
+if "confirmation_pending" not in st.session_state:
+    st.session_state.confirmation_pending = False
+
+if "info_verified" not in st.session_state:
+    st.session_state.info_verified = False
+
+# Chat history
 for msg in st.session_state.messages:
-    role = msg["role"]
-    with st.chat_message(role):
+    with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
 
-# Handle user input
-if user_input:
-    st.session_state.messages.append({"role": "user", "content": user_input})
-    
-    # Update context
-    st.session_state.context = update_context(st.session_state.context, user_input)
-    
-    # Generate bot reply using LLM
-    reply = get_llm_response(user_input, st.session_state.context)
-    
-    # Show response
-    st.session_state.messages.append({"role": "assistant", "content": reply})
+# Show next question if collecting
+if (
+    st.session_state.current_question_index < len(candidate_questions)
+    and not st.session_state.confirmation_pending
+):
+    current_question = candidate_questions[st.session_state.current_question_index]
     with st.chat_message("assistant"):
-        st.markdown(reply)
+        st.markdown(current_question)
 
-    # End conversation logic
-    if any(word in user_input.lower() for word in ["bye", "thank you", "exit", "stop"]):
-        st.markdown("👋 Thanks for chatting. We'll reach out soon!")
-        clear_context()
+# User input
+user_input = st.chat_input("Your answer...")
+
+# Fallback and exit logic
+exit_keywords = ["exit", "stop", "bye", "thank you"]
+
+if user_input:
+    user_input = user_input.strip()
+
+    if not user_input:
+        with st.chat_message("assistant"):
+            st.markdown("⚠️ Sorry, I didn’t catch that. Could you please repeat your answer?")
+        st.stop()
+
+    if user_input.lower() in exit_keywords:
+        with st.chat_message("assistant"):
+            st.markdown("👋 Thanks for chatting! We’ll follow up soon. Have a great day!")
+        st.stop()
+
+    # Show user input
+    st.session_state.messages.append({"role": "user", "content": user_input})
+    with st.chat_message("user"):
+        st.markdown(user_input)
+
+    # If we’re collecting info
+    if (
+        st.session_state.current_question_index < len(candidate_questions)
+        and not st.session_state.confirmation_pending
+    ):
+        question_key = candidate_questions[st.session_state.current_question_index]
+        st.session_state.candidate_info[question_key] = user_input
+        st.session_state.context = update_context(st.session_state.context, user_input)
+        st.session_state.current_question_index += 1
+
+    # After all questions → Show summary and ask for confirmation
+    if (
+        st.session_state.current_question_index == len(candidate_questions)
+        and not st.session_state.confirmation_pending
+    ):
+        summary = "**Here’s the information you provided:**\n\n"
+        for question, answer in st.session_state.candidate_info.items():
+            summary += f"**{question}**: {answer}\n\n"
+
+        with st.chat_message("assistant"):
+            st.markdown(summary)
+            st.markdown("✅ Is all this correct? (yes / no)")
+
+        st.session_state.confirmation_pending = True
+        st.stop()
+
+    # Handle user reply to confirmation
+    if st.session_state.confirmation_pending and not st.session_state.info_verified:
+        if user_input.lower() == "yes":
+            st.session_state.info_verified = True
+        elif user_input.lower() == "no":
+            with st.chat_message("assistant"):
+                st.markdown("🔄 Please restart the chat to re-enter your details.")
+            st.stop()
+        else:
+            with st.chat_message("assistant"):
+                st.markdown("⚠️ Please reply with `yes` or `no` to confirm the information.")
+            st.stop()
+
+    # If verified, proceed to generate tech questions
+    if st.session_state.info_verified:
+        tech_stack = st.session_state.candidate_info.get(candidate_questions[-1], "")
+        instruction = f"Generate 3 to 5 technical interview questions for the following tech stack: {tech_stack}. Keep them relevant and appropriately challenging."
+
+        reply = get_llm_response(instruction, st.session_state.context)
+        st.session_state.messages.append({"role": "assistant", "content": reply})
+        with st.chat_message("assistant"):
+            st.markdown("✅ Thanks! Here are your custom technical questions:")
+            st.markdown(reply)
+
+        # Save info
+        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        name = st.session_state.candidate_info.get("What is your full name?", "anonymous").replace(" ", "_")
+        filename = f"candidate_{name}_{timestamp}.json"
+        os.makedirs("candidates", exist_ok=True)
+
+        with open(f"candidates/{filename}", "w") as f:
+            json.dump(st.session_state.candidate_info, f, indent=4)
+
+        st.success(f"✅ Candidate info saved to: `candidates/{filename}`")
+
+        st.session_state.current_question_index += 1  # lock the flow
+        st.stop()
