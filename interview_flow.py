@@ -16,31 +16,46 @@ if "tech_answers" not in st.session_state:
 if "tech_feedback" not in st.session_state:
     st.session_state.tech_feedback = []
 
+if "interview_complete" not in st.session_state:
+    st.session_state.interview_complete = False
 
-def start_tech_evaluation(questions):
+
+def start_tech_evaluation(questions, experience_level="beginner"):
     """
     Starts the technical interview evaluation step-by-step.
     questions: list of generated questions.
+    experience_level: used to adjust difficulty
     """
-    st.session_state.tech_questions = questions
+    # Adjust question prompt for experience
+    adjusted_questions = []
+    for q in questions:
+        q_prompt = f"[Experience Level: {experience_level.capitalize()}] {q}"
+        adjusted_questions.append(q_prompt)
+
+    st.session_state.tech_questions = adjusted_questions
     st.session_state.tech_question_index = 0
     st.session_state.tech_answers = []
     st.session_state.tech_feedback = []
+    st.session_state.interview_complete = False
 
 
 def run_interview():
     """
     Run the technical Q&A and feedback loop.
     """
-    if st.session_state.tech_question_index >= len(st.session_state.tech_questions):
-        st.success("✅ Interview complete! 🎉")
+    if st.session_state.interview_complete:
+        st.markdown("✅ This interview session has been completed. Restart to begin again.")
+        return
 
+    if st.session_state.tech_question_index >= len(st.session_state.tech_questions):
+        st.session_state.interview_complete = True
+
+        st.success("✅ Interview complete! 🎉")
         with st.chat_message("assistant"):
             st.markdown("👋 Thank you for participating in the interview process.")
             st.markdown("📩 We’ll review your responses and get back to you with next steps shortly.")
             st.markdown("Feel free to close this window or click **🔄 Restart** to begin again.")
 
-        # Show full summary
         for i, (q, a, f) in enumerate(zip(
             st.session_state.tech_questions,
             st.session_state.tech_answers,
@@ -49,7 +64,6 @@ def run_interview():
             st.markdown(f"---\n**Q{i+1}:** {q}")
             st.markdown(f"**Your Answer:** {a}")
             st.markdown(f"**Feedback:** {f}")
-
         return
 
     # Current question

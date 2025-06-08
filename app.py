@@ -4,13 +4,15 @@ import json
 import datetime
 from utils.openai_utils import get_llm_response
 from utils.context_utils import update_context, clear_context
+from interview_flow import start_tech_evaluation, run_interview  # Importing the interview module
+import re
 
 # Page setup
 st.set_page_config(page_title="TalentScout Hiring Assistant", layout="wide")
 st.title("🤖 TalentScout - AI Hiring Assistant")
 st.markdown("Hi! I'm here to help screen candidates. Let's get started! 🚀")
 
-# 🔄 Restart
+# 🔄 Restart if st.button("🔄 Restart Chat"):
 if st.button("🔄 Restart Chat"):
     for key in list(st.session_state.keys()):
         del st.session_state[key]
@@ -55,7 +57,6 @@ for msg in st.session_state.messages:
 user_input = st.chat_input("Your answer...")
 
 exit_keywords = ["exit", "stop", "bye", "thank you"]
-
 if user_input:
     user_input = user_input.strip()
 
@@ -75,10 +76,8 @@ if user_input:
         st.markdown(user_input)
 
     # Info collection phase
-    if (
-        st.session_state.current_question_index < len(candidate_questions)
-        and not st.session_state.confirmation_pending
-    ):
+    if (st.session_state.current_question_index < len(candidate_questions)
+            and not st.session_state.confirmation_pending):
         # Save answer
         q_key = candidate_questions[st.session_state.current_question_index]
         st.session_state.candidate_info[q_key] = user_input
@@ -130,6 +129,21 @@ if user_input:
             st.markdown("✅ Thanks! Here are your custom technical questions:")
             st.markdown(reply)
 
+        # Extract experience
+        experience = st.session_state.candidate_info.get("How many years of experience do you have?", "0")
+        
+        # Extract numeric part safely from experience string
+        match = re.search(r'\d+', experience)
+        years = int(match.group()) if match else 0
+
+        # Assign level
+        level = "advanced" if years >= 4 else "intermediate" if years >= 2 else "beginner"
+
+        questions = reply.strip().split("\n\n")  # Assuming LLM gives 1 question per block
+
+        start_tech_evaluation(questions, experience_level=level)
+        run_interview()  # Run the interview after technical evaluation
+
         # Save candidate info
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         name = st.session_state.candidate_info.get("What is your full name?", "anonymous").replace(" ", "_")
@@ -145,11 +159,9 @@ if user_input:
         st.stop()
 
 # Display initial question on first load
-if (
-    st.session_state.current_question_index < len(candidate_questions)
-    and not st.session_state.confirmation_pending
-    and user_input is None
-):
+if (st.session_state.current_question_index < len(candidate_questions)
+        and not st.session_state.confirmation_pending
+        and user_input is None):
     current_q = candidate_questions[st.session_state.current_question_index]
     with st.chat_message("assistant"):
         st.markdown(current_q)
