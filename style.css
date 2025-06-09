@@ -1,0 +1,98 @@
+/* Container for chat messages - max width for readability */
+.chat-message {
+    max-width: 65%;
+    margin-bottom: 0.75rem;
+    padding: 1rem 1.25rem;
+    border-radius: 15px;
+    font-size: 17px;
+    line-height: 1.5;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    transition: background-color 0.3s ease;
+    word-wrap: break-word;
+}
+
+/* User messages aligned right with distinct background */
+.user-msg {
+    background-color: #dcf8c6; /* light green */
+    font-size: 17px;
+    margin-left: auto;
+    margin-right: 0;
+    text-align: right;
+    border: none;
+    color: #202c33;
+}
+
+.user-msg:hover {
+    background-color: #c9e6a6;
+}
+
+/* Bot messages aligned left with subtle background */
+.bot-msg {
+    background-color: #f1f0f0; /* light gray */
+    font-size: 17px;
+    margin-right: auto;
+    margin-left: 0;
+    text-align: left;
+    border: none;
+    color: #333;
+}
+
+.bot-msg:hover {
+    background-color: #dcdcdc;
+}
+
+/* Header bar fixed at top */
+/* .chat-header {
+    position: sticky;
+    top: 0;
+    background: #075e54;
+    color: white;
+    padding: 1rem 2rem;
+    font-size: 22px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    z-index: 10;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+} */
+
+/* Profile picture in header */
+.chat-header img {
+    height: 45px;
+    width: 45px;
+    border-radius: 50%;
+    border: 2px solid white;
+}
+
+/* Input area styling */
+.stChatInput {
+    margin-top: 1rem !important;
+}
+
+.stTextInput > textarea {
+    font-size: 17px !important;
+    padding: 0.75rem 1rem !important;
+    border-radius: 12px !important;
+    border: 1px solid #ccc !important;
+    resize: vertical !important;
+    min-height: 50px !important;
+    max-height: 100px !important;
+}
+
+/* Scroll area for messages (optional if using a container) */
+.chat-container {
+    max-height: 75vh;
+    overflow-y: auto;
+    padding: 1rem 2rem;
+}
+
+/* Add subtle scrollbar styling */
+.chat-container::-webkit-scrollbar {
+    width: 8px;
+}
+
+.chat-container::-webkit-scrollbar-thumb {
+    background-color: rgba(0,0,0,0.1);
+    border-radius: 4px;
+}
