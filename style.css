@@ -16,8 +16,7 @@
     background-color: #dcf8c6; /* light green */
     font-size: 17px;
     margin-left: auto;
-    margin-right: 0;
-    text-align: right;
+    margin-right: 1rem;
     border: none;
     color: #202c33;
 }
@@ -31,7 +30,7 @@
     background-color: #f1f0f0; /* light gray */
     font-size: 17px;
     margin-right: auto;
-    margin-left: 0;
+    margin-left: 1rem;
     text-align: left;
     border: none;
     color: #333;
@@ -42,10 +41,10 @@
 }
 
 /* Header bar fixed at top */
-/* .chat-header {
+.chat-header {
     position: sticky;
     top: 0;
-    background: #075e54;
+    background: #075e54; /* Dark teal to match branding */
     color: white;
     padding: 1rem 2rem;
     font-size: 22px;
@@ -55,7 +54,7 @@
     gap: 1rem;
     z-index: 10;
     box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-} */
+}
 
 /* Profile picture in header */
 .chat-header img {
@@ -68,31 +67,42 @@
 /* Input area styling */
 .stChatInput {
     margin-top: 1rem !important;
+    background-color: #f9f9f9; /* Subtle background for input area */
+    padding: 0.5rem;
+    border-radius: 12px;
+    border: 1px solid #ccc;
 }
 
 .stTextInput > textarea {
     font-size: 17px !important;
     padding: 0.75rem 1rem !important;
     border-radius: 12px !important;
-    border: 1px solid #ccc !important;
+    border: none !important;
+    background-color: #fff !important;
     resize: vertical !important;
     min-height: 50px !important;
     max-height: 100px !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
-/* Scroll area for messages (optional if using a container) */
+/* Scroll area for messages */
 .chat-container {
     max-height: 75vh;
     overflow-y: auto;
     padding: 1rem 2rem;
+    background-color: #e5ddd5; /* Subtle background to match chat app aesthetic */
 }
 
-/* Add subtle scrollbar styling */
+/* Scrollbar styling */
 .chat-container::-webkit-scrollbar {
-    width: 8px;
+    width: 10px;
 }
 
 .chat-container::-webkit-scrollbar-thumb {
-    background-color: rgba(0,0,0,0.1);
-    border-radius: 4px;
+    background-color: #075e54; /* Match header color */
+    border-radius: 5px;
+}
+
+.chat-container::-webkit-scrollbar-track {
+    background-color: #f1f0f0;
 }
