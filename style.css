@@ -16,7 +16,11 @@
     background-color: #dcf8c6; /* light green */
     font-size: 17px;
     margin-left: auto;
+<<<<<<< HEAD
     margin-right: 1rem;
+=======
+    margin-right: 0;
+>>>>>>> 53eb06b (solve error, working on LLM, Feedback, and improve UI.)
     border: none;
     color: #202c33;
 }
@@ -67,10 +71,18 @@
 /* Input area styling */
 .stChatInput {
     margin-top: 1rem !important;
+<<<<<<< HEAD
     background-color: #f9f9f9; /* Subtle background for input area */
     padding: 0.5rem;
     border-radius: 12px;
     border: 1px solid #ccc;
+=======
+    /* background: #f8fafb !important; */
+    border-radius: 14px !important;
+    box-shadow: 0 2px 8px rgba(7,94,84,0.07) !important;
+    /* border: 1px solid #e0e0e0 !important; */
+    padding: 0.5rem 1rem !important;
+>>>>>>> 53eb06b (solve error, working on LLM, Feedback, and improve UI.)
 }
 
 .stTextInput > textarea {
@@ -82,7 +94,12 @@
     resize: vertical !important;
     min-height: 50px !important;
     max-height: 100px !important;
+<<<<<<< HEAD
     box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+=======
+    background: #f8fafb !important;
+    box-shadow: 0 1px 3px rgba(7,94,84,0.05) !important;
+>>>>>>> 53eb06b (solve error, working on LLM, Feedback, and improve UI.)
 }
 
 /* Scroll area for messages */
@@ -90,17 +107,35 @@
     max-height: 75vh;
     overflow-y: auto;
     padding: 1rem 2rem;
+<<<<<<< HEAD
     background-color: #e5ddd5; /* Subtle background to match chat app aesthetic */
+=======
+    /* background: #e5ddd5; */
+    border-radius: 18px;
+>>>>>>> 53eb06b (solve error, working on LLM, Feedback, and improve UI.)
 }
 
 /* Scrollbar styling */
 .chat-container::-webkit-scrollbar {
     width: 10px;
+<<<<<<< HEAD
 }
 
 .chat-container::-webkit-scrollbar-thumb {
     background-color: #075e54; /* Match header color */
     border-radius: 5px;
+=======
+    background: #f5f5f5;
+}
+
+.chat-container::-webkit-scrollbar-thumb {
+    background-color: #075e54;
+    border-radius: 6px;
+}
+
+.chat-container::-webkit-scrollbar-track {
+    background: #f5f5f5;
+>>>>>>> 53eb06b (solve error, working on LLM, Feedback, and improve UI.)
 }
 
 .chat-container::-webkit-scrollbar-track {

@@ -14,7 +14,11 @@ from interview_flow import (
     validate_input,
     classify_experience_level,
 )
+<<<<<<< HEAD
 from prompts.prompt_templates import DEFAULT_TECH_QUESTIONS, TECH_QUESTION_PROMPT
+=======
+from prompts.prompt_templates import DEFAULT_TECH_QUESTIONS  # <-- Add this import
+>>>>>>> 53eb06b (solve error, working on LLM, Feedback, and improve UI.)
 
 # Configure logging
 logging.basicConfig(filename="talentscout.log", level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -98,6 +102,7 @@ candidate_questions = [
     "List your tech stack (languages, frameworks, tools)."
 ]
 
+<<<<<<< HEAD
 # Helper functions
 def detect_language(text):
     try:
@@ -113,6 +118,48 @@ def translate_text(text, target_lang):
     translation = get_llm_response(prompt, [])
     logging.debug(f"Translated text to {target_lang}: {translation}")
     return translation.strip()
+=======
+# Initialize session state
+for key, default in {
+    "messages": [],
+    "context": [],
+    "candidate_info": {},
+    "current_question_index": 0,
+    "confirmation_pending": False,
+    "info_verified": False,
+    "interview_complete": False,
+    "greeting_done": False,
+    "user_ready": False,
+    "edit_mode": False,
+    "edit_question": None,
+    "pre_interview_confirmed": False,
+    "tech_questions": [],
+    "tech_question_index": 0,
+    "tech_answers": [],
+    "tech_feedback": [],
+    "experience_level": None,
+}.items():
+    if key not in st.session_state:
+        st.session_state[key] = default
+
+# Centralized exit handling
+def handle_exit(user_input):
+    exit_keywords = ["exit", "stop", "bye", "thank you"]
+    if user_input and user_input.lower() in exit_keywords:
+        st.session_state.messages.append({
+            "role": "assistant",
+            "content": "👋 Thanks for chatting! We’ll follow up soon. Have a great day!"
+        })
+        st.rerun()
+        return True
+    return False
+
+# Optimized typewriter effect
+def typewriter_effect(text, delay=0.5):
+    placeholder = st.empty()
+    time.sleep(delay)
+    placeholder.markdown(f'<div class="chat-message bot-msg">{text}</div>', unsafe_allow_html=True)
+>>>>>>> 53eb06b (solve error, working on LLM, Feedback, and improve UI.)
 
 def typewriter_effect(text, container):
     """Display message in a container with minimal delay."""
@@ -125,6 +172,7 @@ def parse_technical_questions(llm_response):
     questions = []
     current_question = ""
 
+<<<<<<< HEAD
     for line in lines:
         line = line.strip()
         if not line or "here are" in line.lower() or "based on" in line.lower() or "technical interview questions" in line.lower():
@@ -135,6 +183,14 @@ def parse_technical_questions(llm_response):
             current_question = re.sub(r"^\d+\.?\s|^\d+\)\s|^[-*]\s", "", line)
         else:
             current_question += " " + line
+=======
+# 📝 Chat input
+user_input = st.chat_input("Your answer...")
+
+# Centralized exit check
+if handle_exit(user_input):
+    st.stop()
+>>>>>>> 53eb06b (solve error, working on LLM, Feedback, and improve UI.)
 
     if current_question:
         questions.append(current_question.strip())
@@ -236,10 +292,38 @@ def main():
             typewriter_effect(bot_reply)
         return
 
+<<<<<<< HEAD
     # Handle candidate info collection
     if st.session_state.user_ready and not st.session_state.info_verified:
         if not user_input:
             bot_reply = "⚠️ Sorry, I didn’t catch that. Could you please repeat your answer?"
+=======
+# 🧠 Run interview only after info is verified
+if st.session_state.info_verified and not st.session_state.interview_complete:
+    run_interview()
+    st.stop()
+
+# 🧾 Handle normal question flow
+if user_input and st.session_state.user_ready:
+    user_input = user_input.strip()
+
+    if not user_input:
+        st.warning("⚠️ Sorry, I didn’t catch that. Could you please repeat your answer?")
+        st.stop()
+
+    if user_input.lower() in ["exit", "stop", "bye", "thank you"]:
+        st.markdown("👋 Thanks for chatting! We’ll follow up soon. Have a great day!")
+        st.stop()
+
+    st.session_state.messages.append({"role": "user", "content": user_input})
+    st.markdown(f'<div class="chat-message user-msg">{user_input}</div>', unsafe_allow_html=True)
+
+    if st.session_state.current_question_index < len(candidate_questions) and not st.session_state.confirmation_pending:
+        question = candidate_questions[st.session_state.current_question_index]
+
+        if not validate_input(question, user_input):
+            bot_reply = "⚠️ **Invalid input. Please try again.**"
+>>>>>>> 53eb06b (solve error, working on LLM, Feedback, and improve UI.)
             st.session_state.messages.append({"role": "assistant", "content": bot_reply})
             typewriter_effect(bot_reply, chat_container)
             return
@@ -345,6 +429,7 @@ def main():
         st.session_state.messages.append({"role": "assistant", "content": "✅ Thanks! Let’s begin the technical interview."})
         typewriter_effect("✅ Thanks! Let’s begin the technical interview.", chat_container)
 
+<<<<<<< HEAD
         st.session_state.tech_questions = tech_questions
         start_tech_evaluation(st.session_state.tech_questions, experience_level=level)
         # Save candidate file
@@ -360,13 +445,108 @@ def main():
 
         st.session_state.tech_interview_ready = True
         return
+=======
+# Edit functionality during confirmation
+def handle_edit_command(user_input):
+    if user_input and user_input.lower().startswith("edit "):
+        try:
+            idx = int(user_input.split()[1]) - 1
+            if 0 <= idx < len(candidate_questions):
+                st.session_state.edit_mode = True
+                st.session_state.edit_question = idx
+                return True
+        except Exception:
+            pass
+    return False
+
+# ✅ Confirmation step
+if st.session_state.confirmation_pending and not st.session_state.info_verified:
+    if handle_edit_command(user_input):
+        question = candidate_questions[st.session_state.edit_question]
+        bot_reply = f"✏️ Please re-enter your answer for: **{question}**"
+        st.session_state.messages.append({"role": "assistant", "content": bot_reply})
+        typewriter_effect(bot_reply)
+        st.stop()
+    elif st.session_state.edit_mode:
+        question = candidate_questions[st.session_state.edit_question]
+        if not validate_input(question, user_input):
+            bot_reply = "⚠️ **Invalid input. Please try again.**"
+            st.session_state.messages.append({"role": "assistant", "content": bot_reply})
+            typewriter_effect(bot_reply)
+            st.stop()
+        st.session_state.candidate_info[question] = user_input
+        st.session_state.edit_mode = False
+        st.session_state.edit_question = None
+        # Redisplay summary
+        summary = "**Here’s the information you provided:**\n\n"
+        for i, (q, a) in enumerate(st.session_state.candidate_info.items(), 1):
+            summary += f"{i}. **{q}**: {a}\n\n"
+        st.session_state.messages.append({"role": "assistant", "content": summary})
+        typewriter_effect(summary)
+        confirm_msg = "✅ Is all this correct? (yes / no) Or type `edit [number]` to change an answer."
+        st.session_state.messages.append({"role": "assistant", "content": confirm_msg})
+        typewriter_effect(confirm_msg)
+        st.stop()
+    elif user_input is not None and user_input.lower() == "yes":
+        st.session_state.info_verified = True
+    elif user_input is not None and user_input.lower() == "no":
+        bot_reply = "🔄 Please restart the chat to re-enter your details."
+        st.session_state.messages.append({"role": "assistant", "content": bot_reply})
+        typewriter_effect(bot_reply)
+        st.stop()
+    elif user_input is not None:
+        bot_reply = "⚠️ Please reply with `yes`, `no`, or `edit [number]` to confirm or change your information."
+        st.session_state.messages.append({"role": "assistant", "content": bot_reply})
+        typewriter_effect(bot_reply)
+        st.stop()
+
+# Pre-interview confirmation
+if st.session_state.info_verified and not st.session_state.pre_interview_confirmed:
+    confirm_msg = "🧑‍💻 Ready to start your technical interview? (yes to proceed)"
+    st.session_state.messages.append({"role": "assistant", "content": confirm_msg})
+    typewriter_effect(confirm_msg)
+    if user_input and user_input.lower() == "yes":
+        st.session_state.pre_interview_confirmed = True
+        st.rerun()
+    else:
+        st.stop()
+
+# ✅ Generate technical questions
+if st.session_state.info_verified and st.session_state.pre_interview_confirmed:
+    tech_stack = st.session_state.candidate_info.get(candidate_questions[-1], "")
+    experience = st.session_state.candidate_info.get("How many years of experience do you have?", "0")
+    level = classify_experience_level(experience)
+    st.session_state.experience_level = level
+>>>>>>> 53eb06b (solve error, working on LLM, Feedback, and improve UI.)
 
 # Create main container and run logic
 main_container = st.container()
 with main_container:
     main()
 
+<<<<<<< HEAD
 # Run technical interview if ready
 if not st.session_state.interview_complete and st.session_state.info_verified and st.session_state.tech_questions and st.session_state.tech_interview_ready:
     with main_container:
         run_interview()
+=======
+    # Use default questions if LLM fails
+    questions = reply.strip().split("\n\n") if reply else DEFAULT_TECH_QUESTIONS
+
+    # Initialize technical interview state
+    start_tech_evaluation(questions, experience_level=level)
+
+    # Save candidate info
+    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    name = st.session_state.candidate_info.get("What is your full name?", "anonymous").replace(" ", "_")
+    filename = f"candidate_{name}_{timestamp}.json"
+    os.makedirs("candidates", exist_ok=True)
+    with open(f"candidates/{filename}", "w") as f:
+        json.dump(st.session_state.candidate_info, f, indent=4)
+
+    st.success(f"✅ Candidate info saved to: `candidates/{filename}`")
+
+    # Start the technical interview loop
+    run_interview()
+    st.stop()
+>>>>>>> 53eb06b (solve error, working on LLM, Feedback, and improve UI.)

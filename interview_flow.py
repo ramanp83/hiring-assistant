@@ -2,7 +2,12 @@ import streamlit as st
 from utils.openai_utils import get_llm_response
 from prompts.prompt_templates import TECH_FEEDBACK_PROMPT, SENTIMENT_ANALYSIS_PROMPT
 import re
+<<<<<<< HEAD
 import logging
+=======
+from prompts.prompt_templates import TECH_FEEDBACK_PROMPT, SENTIMENT_ANALYSIS_PROMPT
+import time
+>>>>>>> 53eb06b (solve error, working on LLM, Feedback, and improve UI.)
 
 logging.basicConfig(filename="talentscout.log", level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s")
 
@@ -84,6 +89,7 @@ def run_interview(container):
     with container:
         user_answer = st.chat_input("Your answer to the above question...", key=f"tech_input_{st.session_state.tech_question_index}")
 
+<<<<<<< HEAD
     if not user_answer or user_answer == st.session_state.get("last_tech_input"):
         return
 
@@ -115,6 +121,19 @@ def run_interview(container):
     # LLM feedback
     prompt = TECH_FEEDBACK_PROMPT.format(question=current_q, answer=user_answer)
     with st.spinner("Generating feedback..."):
+=======
+    # Empty answer validation
+    if user_answer is not None:
+        user_answer = user_answer.strip()
+        if not user_answer:
+            st.warning("⚠️ Please provide an answer before proceeding.")
+            st.stop()
+
+        st.session_state.tech_answers.append(user_answer)
+
+        # Use centralized prompt from prompt_templates.py
+        prompt = TECH_FEEDBACK_PROMPT.format(answer=user_answer)
+>>>>>>> 53eb06b (solve error, working on LLM, Feedback, and improve UI.)
         feedback = get_llm_response(prompt, [])
 
     # Combine sentiment and feedback
@@ -122,9 +141,15 @@ def run_interview(container):
     st.session_state.messages.append({"role": "assistant", "content": combined_feedback})
     st.session_state.tech_feedback.append(combined_feedback)
 
+<<<<<<< HEAD
     with container:
         st.markdown(f'<div class="chat-message bot-msg">{combined_feedback}</div>', unsafe_allow_html=True)
     logging.debug(f"Feedback provided: {combined_feedback[:50]}...")
+=======
+        st.session_state.tech_question_index += 1
+        time.sleep(0.1)  # Stable rerun with delay
+        st.rerun()
+>>>>>>> 53eb06b (solve error, working on LLM, Feedback, and improve UI.)
 
     # Move to next question
     st.session_state.tech_question_index += 1
